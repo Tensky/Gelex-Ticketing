@@ -10,8 +10,10 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.TotalCaptureResult;
+import android.media.AudioManager;
 import android.media.Image;
 import android.media.ImageReader;
+import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -47,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView textView;
     private String lastNama = "";
     private String lastNim = "";
+    private ToneGenerator toneGenerator = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,18 +99,21 @@ public class MainActivity extends AppCompatActivity {
             FirebaseVisionImage visionImage = FirebaseVisionImage.fromMediaImage(resultImage, FirebaseVisionImageMetadata.ROTATION_0);
             textView.setText("");
             detector.processImage(visionImage).addOnCompleteListener(task -> {
-                Log.d(TAG, "onImageAvailable: AVAILABLE");
                 if(!task.isSuccessful()) return;
                 FirebaseVisionText visionText = task.getResult();
                 Log.d("HMM", visionText.getText());
                 for (FirebaseVisionText.TextBlock textBlock : visionText.getTextBlocks()){
                     Log.d("HMM", "BLOCK:" + textBlock.getText());
-                    if(textBlock.getText().matches(".*\\s\\d{2}/\\d{6}/\\w{2}/\\d{5}\\s.*")){
+                    if(textBlock.getText().matches(".*\\s\\d{2}/\\d{6}/[A-Z]{2}/\\d{5}\\s.*")){
                         String source = textBlock.getText();
                         String nama = source.substring(0, source.indexOf("/") - 2);
                         String nim = source.substring(source.indexOf("/") - 2, source.lastIndexOf("/") + 6);
                         textView.setText(nama + "\n" + nim);
+                        if(nama.matches(".*\\d+.*")) break;
+                        toneGenerator.startTone(ToneGenerator.TONE_CDMA_PIP, 500);
                         if(lastNama.equals(nama) || lastNim.equals(nim)) break;
+                        lastNama = nama;
+                        lastNim = nim;
                         Map<String, Object> data = new HashMap<>();
                         data.put("nama", nama);
                         data.put("nim", nim);
@@ -116,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     }
                 }
-                handler.post(() -> takePicture());
+                handler.postDelayed(() -> takePicture(), 500);
             });
         }
     };
