@@ -12,7 +12,7 @@
       font-family: 'Lato', sans-serif;
     }
 
-    h1 {
+    h1, h3 {
       text-align: center;
     }
 
@@ -39,6 +39,8 @@
 
   <h1>Daftar Hadir Gelex 2019</h1>
 
+  <h3 id="counter"></h3>
+
   <table id="tabel">
     <tr>
       <th>Nama</th>
@@ -53,8 +55,10 @@
   <script src="/__/firebase/init.js"></script>
 
   <script>
+    const counter = document.getElementById('counter');
     const table = document.getElementById('tabel');
     const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    let count = 0;
 
     firebase.auth().onAuthStateChanged(function (user) {
       if (!user) {
@@ -73,6 +77,8 @@
         cell1.innerHTML = data.nama;
         cell2.innerHTML = data.nim;
         cell3.innerHTML = data.waktu.toDate().toLocaleDateString('id-ID', dateOptions);
+        count++;
+        counter.innerHTML = count;
       });
     });
   </script>
