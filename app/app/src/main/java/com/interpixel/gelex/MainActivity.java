@@ -14,16 +14,15 @@ import android.media.AudioManager;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.ToneGenerator;
+import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 import android.widget.TextView;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.ml.vision.FirebaseVision;
@@ -31,7 +30,6 @@ import com.google.firebase.ml.vision.common.FirebaseVisionImage;
 import com.google.firebase.ml.vision.common.FirebaseVisionImageMetadata;
 import com.google.firebase.ml.vision.text.FirebaseVisionText;
 import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,17 +48,28 @@ public class MainActivity extends AppCompatActivity {
     private String lastNama = "";
     private String lastNim = "";
     private ToneGenerator toneGenerator = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
-
+    private NfcAdapter nfcAdapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        nfcAdapter = NfcAdapter.getDefaultAdapter(this);
         textView = findViewById(R.id.textView);
         cameraManager = (CameraManager) getSystemService(CAMERA_SERVICE);
-        openCamera();
         detector = FirebaseVision.getInstance().getOnDeviceTextRecognizer();
+        findViewById(R.id.cameraButton).setOnClickListener(view -> openCamera());
     }
+
+    private void enableNfcAdapter(){
+        Bundle options = new Bundle();
+        options.putInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, 500);
+        options.putString(NfcAdapter.EXTRA_NDEF_MESSAGES, "");
+        nfcAdapter.enableReaderMode(this, nfcReaderCallback, NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK, options);
+    }
+
+    private final NfcAdapter.ReaderCallback nfcReaderCallback = tag -> {
+        Log.d(TAG, "TAGnya:" + tag);
+    };
 
     //Camera State Callback
     private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
@@ -201,16 +210,16 @@ public class MainActivity extends AppCompatActivity {
 
 
     @Override
+    protected void onPostResume() {
+        super.onPostResume();
+        if(NfcAdapter.getDefaultAdapter(this) != null) enableNfcAdapter();
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
         if(cameraDevice != null)
         cameraDevice.close();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if(cameraDevice != null)
-        cameraDevice.close();
+        nfcAdapter.disableForegroundDispatch(this);
     }
 }

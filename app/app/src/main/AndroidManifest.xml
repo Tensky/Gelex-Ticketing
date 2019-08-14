@@ -4,8 +4,9 @@
     package="com.interpixel.gelex">
 
     <uses-permission android:name="android.permission.CAMERA" />
-
+    <uses-permission android:name="android.permission.NFC"/>
     <uses-feature android:name="android.hardware.camera2.full" />
+    <uses-feature android:name="android.hardware.nfc"/>
 
     <application
         android:allowBackup="true"
@@ -23,7 +24,13 @@
             </intent-filter>
         </activity>
         <activity android:name=".MainActivity"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
+                <action android:name="android.nfc.action.TAG_DISCOVERED"/>
+                <action android:name="android.nfc.action.TECH_DISCOVERED"/>
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>
